@@ -291,6 +291,10 @@ export const RunCommand = cmd({
         describe: "show thinking blocks",
         default: false,
       })
+      .option("max-turns", {
+        type: "number",
+        describe: "limit the number of agentic turns (print mode only). Exits with an error when the limit is reached",
+      })
   },
   handler: async (args) => {
     let message = [...args.message, ...(args["--"] || [])]
@@ -439,6 +443,7 @@ export const RunCommand = cmd({
 
       async function loop() {
         const toggles = new Map<string, boolean>()
+        let turnCount = 0
 
         for await (const event of events.stream) {
           if (
@@ -479,6 +484,15 @@ export const RunCommand = cmd({
 
             if (part.type === "step-finish") {
               if (emit("step_finish", { part })) continue
+              
+              // Track turn count and enforce max-turns limit (print mode only)
+              if (args.format !== "json" && args["max-turns"]) {
+                turnCount++
+                if (turnCount >= args["max-turns"]) {
+                  UI.error(`Maximum number of turns (${args["max-turns"]}) reached`)
+                  process.exit(1)
+                }
+              }
             }
 
             if (part.type === "text" && part.time?.end) {
