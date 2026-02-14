@@ -484,7 +484,7 @@ export const RunCommand = cmd({
 
             if (part.type === "step-finish") {
               if (emit("step_finish", { part })) continue
-              
+
               // Track turn count and enforce max-turns limit (print mode only)
               if (args.format !== "json" && args["max-turns"]) {
                 turnCount++
